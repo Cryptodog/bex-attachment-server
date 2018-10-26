@@ -211,6 +211,7 @@ func (s *server) upload(rw http.ResponseWriter, r *http.Request, id *spam) {
 	io.Copy(f, rd)
 
 	if f.Size() != cl {
+		yo.Warn("Expected", cl, "got", f.Size())
 		f.Flush()
 		f.Delete()
 
