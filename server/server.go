@@ -140,6 +140,8 @@ func (s *server) upload(rw http.ResponseWriter, r *http.Request, id *spam) {
 		return
 	}
 
+	yo.Println("Uploading", _cl, id.IP)
+
 	if cl > maxUploadSize {
 		rw.WriteHeader(http.StatusRequestEntityTooLarge)
 		return
@@ -211,7 +213,7 @@ func (s *server) upload(rw http.ResponseWriter, r *http.Request, id *spam) {
 	io.Copy(f, rd)
 
 	if f.Size() != cl {
-		yo.Warn("Expected", cl, "got", f.Size())
+		yo.Println("Expected", cl, "got", f.Size())
 		f.Flush()
 		f.Delete()
 
