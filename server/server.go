@@ -71,9 +71,10 @@ func New(location string, storageLimit int64) http.Handler {
 
 	r := mux.NewRouter()
 
-	r.PathPrefix("/files/").Handler(http.StripPrefix("/files/", http.FileServer(http.Dir(location))))
 	r.HandleFunc("/upload", s.checkSpam(s.upload)).Methods("POST")
 	r.HandleFunc("/statistics.json", s.statistics).Methods("GET")
+	r.PathPrefix("/files/").Handler(http.StripPrefix("/files/", http.FileServer(http.Dir(location))))
+
 	return r
 }
 
@@ -130,6 +131,10 @@ func (s *server) watchIP(id *spam) {
 }
 
 func (s *server) upload(rw http.ResponseWriter, r *http.Request, id *spam) {
+	if r.Method != "POST" {
+		return
+	}
+
 	p := etc.ParseSystemPath(s.location)
 
 	_cl := r.URL.Query().Get("cl")
