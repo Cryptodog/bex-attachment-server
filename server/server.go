@@ -69,7 +69,7 @@ func New(location string, storageLimit int64) http.Handler {
 		os.MkdirAll(location, 0700)
 	}
 
-	r := mux.NewRouter()
+	r := mux.NewRouter().StrictSlash(true)
 
 	r.HandleFunc("/upload", s.checkSpam(s.upload)).Methods("POST")
 	r.HandleFunc("/statistics.json", s.statistics).Methods("GET")
