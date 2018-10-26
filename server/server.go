@@ -210,7 +210,10 @@ func (s *server) upload(rw http.ResponseWriter, r *http.Request, id *spam) {
 		cl,
 	}
 
-	io.Copy(f, rd)
+	_, err = io.Copy(f, rd)
+	if err != nil {
+		yo.Warn(err)
+	}
 
 	if f.Size() != cl {
 		yo.Println("Expected", cl, "got", f.Size())
