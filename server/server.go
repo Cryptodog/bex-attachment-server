@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"strconv"
 	"sync"
 	"time"
 
@@ -131,7 +132,12 @@ func (s *server) watchIP(id *spam) {
 func (s *server) upload(rw http.ResponseWriter, r *http.Request, id *spam) {
 	p := etc.ParseSystemPath(s.location)
 
-	cl := r.ContentLength
+	_cl := r.URL.Query().Get("cl")
+	cl, err := strconv.ParseInt(_cl, 0, 64)
+	if err != nil {
+		rw.WriteHeader(http.StatusBadRequest)
+		return
+	}
 
 	if cl > maxUploadSize {
 		rw.WriteHeader(http.StatusRequestEntityTooLarge)
@@ -196,7 +202,12 @@ func (s *server) upload(rw http.ResponseWriter, r *http.Request, id *spam) {
 		return
 	}
 
-	io.Copy(f, r.Body)
+	rd := &io.LimitedReader{
+		r.Body,
+		cl,
+	}
+
+	io.Copy(f, rd)
 
 	if f.Size() != cl {
 		f.Flush()
