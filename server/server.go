@@ -135,6 +135,7 @@ func (s *server) upload(rw http.ResponseWriter, r *http.Request, id *spam) {
 	_cl := r.URL.Query().Get("cl")
 	cl, err := strconv.ParseInt(_cl, 0, 64)
 	if err != nil {
+		yo.Warn(err)
 		rw.WriteHeader(http.StatusBadRequest)
 		return
 	}
