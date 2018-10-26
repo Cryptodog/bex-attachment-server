@@ -210,14 +210,15 @@ func (s *server) upload(rw http.ResponseWriter, r *http.Request, id *spam) {
 		cl,
 	}
 
-	_, err = io.Copy(f, rd)
+	wr, err := io.Copy(f, rd)
 	if err != nil {
 		yo.Warn(err)
 	}
 
-	if f.Size() != cl {
-		yo.Println("Expected", cl, "got", f.Size())
-		f.Flush()
+	f.Close()
+
+	if wr != cl {
+		yo.Println("Expected", cl, "got", wr)
 		f.Delete()
 
 		rw.WriteHeader(http.StatusConflict)
