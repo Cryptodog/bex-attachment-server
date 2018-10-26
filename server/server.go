@@ -71,9 +71,9 @@ func New(location string, storageLimit int64) http.Handler {
 
 	r := mux.NewRouter()
 
-	r.PathPrefix("/files/").Handler(http.FileServer(http.Dir(location)))
-	r.HandleFunc("/upload", s.checkSpam(s.upload))
-	r.HandleFunc("/statistics.json", s.statistics)
+	r.PathPrefix("/files/").Handler(http.StripPrefix("/files/", http.FileServer(http.Dir(location))))
+	r.HandleFunc("/upload", s.checkSpam(s.upload)).Methods("POST")
+	r.HandleFunc("/statistics.json", s.statistics).Methods("GET")
 	return r
 }
 
