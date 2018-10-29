@@ -65,11 +65,6 @@ func getConfig(path string) *server.Config {
 }
 
 func sserver(s []string) {
-	if len(s) == 0 {
-		yo.Fatal("needs config path")
-		return
-	}
-
 	cerr := make(chan error)
 
 	cfg := getConfig(yo.StringG("c"))
