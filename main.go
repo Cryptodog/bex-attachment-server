@@ -3,7 +3,6 @@ package main
 import (
 	"net/http"
 	"os"
-	"path/filepath"
 
 	"github.com/BurntSushi/toml"
 	"github.com/superp00t/etc"
@@ -13,16 +12,7 @@ import (
 )
 
 func getConfig(path string) *server.Config {
-	files, err := filepath.Glob(path)
-	if err != nil {
-		yo.Fatal(err)
-	}
-
-	if len(files) < 0 {
-		yo.Fatal("invalid path")
-	}
-
-	if etc.ParseSystemPath(files[0]).IsExtant() == false {
+	if etc.ParseSystemPath(path).IsExtant() == false {
 		fl, err := etc.FileController(files[0])
 		if err != nil {
 			yo.Fatal(err)
@@ -43,11 +33,11 @@ func getConfig(path string) *server.Config {
 			yo.Fatal(err)
 		}
 
-		yo.Ok("A basic configuration file has been created at", files[0], ". You should edit it to your liking.")
+		yo.Ok("A basic configuration file has been created at", path, ". You should edit it to your liking.")
 		os.Exit(0)
 	}
 
-	f, err := etc.FileController(files[0])
+	f, err := etc.FileController(path)
 	if err != nil {
 		yo.Fatal(err)
 	}
