@@ -12,13 +12,15 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/pions/pkg/stun"
+	"github.com/pions/turn"
 	"github.com/superp00t/etc"
 	"github.com/superp00t/etc/yo"
 )
 
 // 32 megabytes
 var megabyte int64 = 1024 * 1024
-var maximumBytes int64 = 32 * megabyte
+var maximumBytes int64 = 64 * megabyte
 var maxUploadSize int64 = 12 * megabyte
 
 type server struct {
@@ -28,6 +30,12 @@ type server struct {
 	location     string
 	IPData       *sync.Map
 	l            *sync.Mutex
+	realm        string
+	proxied      bool
+
+	udpPort int
+
+	accs map[string]string
 }
 
 type spam struct {
@@ -58,22 +66,48 @@ func (s *server) availableSpace() int64 {
 	return free
 }
 
-func New(location string, storageLimit int64) http.Handler {
+func (s *server) AuthenticateRequest(username string, srcAddr *stun.TransportAddr) (password string, ok bool) {
+	if password, ok := s.accs[username]; ok {
+		return password, true
+	}
+	return "", false
+}
+
+func New(c *Config) http.Handler {
 	s := new(server)
 	s.IPData = new(sync.Map)
-	s.location = location
-	s.storageLimit = storageLimit
+	s.location = c.DataLocation
+	s.storageLimit = c.StorageLimit
 	s.l = new(sync.Mutex)
-	p := etc.ParseSystemPath(location)
+	p := etc.ParseSystemPath(s.location)
 	if !p.IsExtant() {
-		os.MkdirAll(location, 0700)
+		os.MkdirAll(s.location, 0700)
+	}
+
+	if c.TURNAddress != "" {
+		s.accs = c.Accounts
+		s.realm = c.Realm
+		ad, err := net.ResolveUDPAddr("udp", c.TURNAddress)
+		if err != nil {
+			yo.Fatal(err)
+		}
+
+		s.udpPort = ad.Port
+
+		go func() {
+			turn.Start(turn.StartArguments{
+				Server:  s,
+				Realm:   s.realm,
+				UDPPort: s.udpPort,
+			})
+		}()
 	}
 
 	r := mux.NewRouter().StrictSlash(true)
 
 	r.HandleFunc("/upload", s.checkSpam(s.upload)).Methods("POST")
 	r.HandleFunc("/statistics.json", s.statistics).Methods("GET")
-	r.PathPrefix("/files/").Handler(http.StripPrefix("/files/", http.FileServer(http.Dir(location))))
+	r.PathPrefix("/files/").Handler(http.StripPrefix("/files/", http.FileServer(http.Dir(s.location))))
 
 	return r
 }
@@ -81,7 +115,7 @@ func New(location string, storageLimit int64) http.Handler {
 func (s *server) checkSpam(fn func(rw http.ResponseWriter, r *http.Request, s *spam)) http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
 		var ip string
-		if yo.BoolG("p") {
+		if s.proxied {
 			ip = r.Header.Get("X-Real-IP")
 		} else {
 			i, err := net.ResolveTCPAddr("tcp", r.RemoteAddr)

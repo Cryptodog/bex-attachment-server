@@ -1,6 +1,8 @@
 # BEX Attachment Server
 
-This server is intended to provide a host for a simple and resilient encrypted file transfer API for Cryptodog servers to replace the slow, unstable and outdated transfer method which uses the (now unsupported) SI filetransfer mechanism with encrypted In-Band Bytestreams.
+This server implements [the BEX Attachment Server specification](https://github.com/Cryptodog/cryptodog/wiki/Binary-Extensions-(BEX)-Draft).
+
+It also exposes a [TURN server](https://github.com/pions/turn) in order to avoid IP leaks caused by BEX's WebRTC extensions.
 
 # Goals
 
@@ -12,13 +14,12 @@ This server is intended to provide a host for a simple and resilient encrypted f
 # Setup
 
 ```bash
-# install Go if you haven't already
+# install Go and git if you haven't already
 sudo apt-get install git golang
 
 go get -u -v github.com/Cryptodog/bex-attachment-server
 
-mkdir /tmp/bex-attachments
-~/go/bin/bex-attachment-server --listen <ip address> --data-location=/tmp/bex-attachments
+~/go/bin/bex-attachment-server --config ~/bex.toml
 ```
 
 If you want to use it behind an NGINX proxy with the X-Real-IP header, use the flag -p, --proxied
