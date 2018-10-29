@@ -13,7 +13,7 @@ import (
 
 func getConfig(path string) *server.Config {
 	if etc.ParseSystemPath(path).IsExtant() == false {
-		fl, err := etc.FileController(files[0])
+		fl, err := etc.FileController(path)
 		if err != nil {
 			yo.Fatal(err)
 		}
