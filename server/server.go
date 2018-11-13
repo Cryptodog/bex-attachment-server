@@ -36,6 +36,8 @@ type server struct {
 	udpPort int
 
 	accs map[string]string
+
+	router http.Handler
 }
 
 type spam struct {
@@ -109,7 +111,17 @@ func New(c *Config) http.Handler {
 	r.HandleFunc("/statistics.json", s.statistics).Methods("GET")
 	r.PathPrefix("/files/").Handler(http.StripPrefix("/files/", http.FileServer(http.Dir(s.location))))
 
-	return r
+	s.router = r
+	return s
+}
+
+func (s *server) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
+	rw.Header().Set("Access-Control-Allow-Methods", "*")
+	rw.Header().Set("Access-Control-Allow-Origin", "*")
+	rw.Header().Set("Access-Control-Allow-Headers", "*")
+	rw.Header().Set("Access-Control-Max-Age", "3600")
+
+	s.router.ServeHTTP(rw, r)
 }
 
 func (s *server) checkSpam(fn func(rw http.ResponseWriter, r *http.Request, s *spam)) http.HandlerFunc {
