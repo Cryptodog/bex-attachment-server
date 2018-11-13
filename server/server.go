@@ -121,6 +121,10 @@ func (s *server) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	rw.Header().Set("Access-Control-Allow-Headers", "*")
 	rw.Header().Set("Access-Control-Max-Age", "3600")
 
+	if r.Method == "OPTIONS" {
+		return
+	}
+
 	s.router.ServeHTTP(rw, r)
 }
 
